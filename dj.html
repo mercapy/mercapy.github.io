@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DJ MELODY PY PRO - DJ REY + AUTOMIX</title>
+<title>DJ REY AYALA PY - PRO</title>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
 <style>
 *{box-sizing:border-box} body{background:#0a0a0a;color:#fff;font-family:Arial;text-align:center;padding:12px;margin:0}
 .top{background:#111;border:2px solid #FFD700;border-radius:15px;padding:12px}
@@ -16,11 +17,11 @@ button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button
 label{font-size:12px;display:block;margin-top:8px} input[type=range]{width:100%}
 audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .mixer{background:#222;border:2px solid #FFD700;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
-#recStatus{font-weight:bold;color:#ff2d2d} #mixStatus{font-weight:bold;color:#00E5FF}
+#recStatus{font-weight:bold;color:#ff2d2d} #mixStatus{font-weight:bold;color:#00E5FF} #mp3Status{font-weight:bold;color:#00ff00}
 </style>
 </head>
 <body>
-<div class="top"><div style="font-size:45px">🎧</div><h1>DJ MELODY PY PRO</h1><div class="sub">DJ REY AYALA • RADIO ONLINE MELODY PY • AREGUÁ</div><p>Subí tu música • Mezclá • Automix • Grabá</p></div>
+<div class="top"><div style="font-size:45px">👑🎧</div><h1>DJ REY AYALA PY</h1><div class="sub">DJ REY AYALA PY • AREGUÁ - PARAGUAY</div><p>Subí tu música • Mezclá • Automix • Grabá en MP3</p></div>
 
 <div class="wrap">
 <div class="deck a"><h2>🎵 DECK A</h2><input type="file" id="fA" accept="audio/*"><audio id="auA" controls></audio>
@@ -44,8 +45,9 @@ audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 
 <br><button class="green" onclick="playBoth()">▶️ SONAR LOS 2</button><button class="gray" onclick="stopBoth()">⏹️ PARAR TODO</button>
 <br><button class="purple" onclick="startAutoMix()">🔥 AUTOMIX - MEZCLA SOLO</button><button class="gray" onclick="stopAutoMix()">⏹️ PARAR AUTOMIX</button>
 <br><button class="blue" onclick="mixRapido()">⚡ MIX RÁPIDO 3 SEG</button><button class="blue" onclick="mixSuave()">🌊 MIX SUAVE 8 SEG</button>
-<hr><h3>🎤 GRABACIÓN</h3><p id="recStatus">● NO GRABANDO</p>
-<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="gray" onclick="stopRec()">⏹️ PARAR Y DESCARGAR</button>
+<hr><h3>🎤 GRABACIÓN EN MP3</h3><p id="recStatus">● NO GRABANDO</p><p id="mp3Status"></p>
+<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="gray" onclick="stopRec()">⏹️ PARAR</button>
+<br><button class="green" style="font-size:16px;padding:14px 20px" onclick="downloadMP3()">🟢 DESCARGAR EN MP3 - LISTO</button>
 <br><button onclick="micAlert()">🎤 MIC - ¡SOY DJ REY!</button></div>
 
 <script>
@@ -79,19 +81,37 @@ function playA(){ctx.resume();auA.play()} function pauseA(){auA.pause()} functio
 function playBoth(){ctx.resume();auA.play();auB.play()} function stopBoth(){auA.pause();auB.pause();stopAutoMix()}
 function cueA(){auA.currentTime=0;auA.play()} function cueB(){auB.currentTime=0;auB.play()}
 function loopA(){auA.loop=!auA.loop;alert('Loop A: '+(auA.loop?'ON':'OFF'))} function loopB(){auB.loop=!auB.loop;alert('Loop B: '+(auB.loop?'ON':'OFF'))}
-function micAlert(){alert('🎤 ¡HABLÁ REY! ¡ESTO ES DJ MELODY PY! ¡DJ REY AYALA!')}
-// --- AUTOMIX ---
-let autoTimer=null, autoDir=1;
+function micAlert(){alert('🎤 ¡HABLÁ REY! ¡ESTO ES DJ REY AYALA PY!')}
+let autoTimer=null;
 function doCrossfade(durationSec){
   let cross=document.getElementById('cross'); let start=parseFloat(cross.value); let target = start<50?100:0; let steps=durationSec*20; let step=(target-start)/steps; let i=0;
   clearInterval(autoTimer); autoTimer=setInterval(()=>{ i++; cross.value=parseFloat(cross.value)+step; cross.dispatchEvent(new Event('input')); if(i>=steps){clearInterval(autoTimer);} },50);
 }
-function startAutoMix(){ playBoth(); document.getElementById('mixStatus').innerText='🔥 AUTOMIX ENCENDIDO - MEZCLANDO SOLO...'; setTimeout(()=>doCrossfade(6),2000); autoTimer=setInterval(()=>{ doCrossfade(6); },12000); }
+function startAutoMix(){ playBoth(); document.getElementById('mixStatus').innerText='🔥 AUTOMIX ENCENDIDO'; setTimeout(()=>doCrossfade(6),2000); autoTimer=setInterval(()=>{ doCrossfade(6); },12000); }
 function stopAutoMix(){ clearInterval(autoTimer); document.getElementById('mixStatus').innerText='MIX MANUAL'; }
 function mixRapido(){ playBoth(); doCrossfade(3); }
 function mixSuave(){ playBoth(); doCrossfade(8); }
-let rec=null,chunks=[]; function startRec(){chunks=[];rec=new MediaRecorder(dest.stream);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{let blob=new Blob(chunks,{type:'audio/webm'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DJ-MELODY-PY-MIX.webm';a.click()};rec.start();document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!';document.getElementById('recStatus').style.color='#00ff00'}
-function stopRec(){if(rec)rec.stop();document.getElementById('recStatus').innerText='✅ MIX GUARDADO - SE DESCARGÓ';}
+let rec=null, chunks=[], lastBlob=null;
+function startRec(){ chunks=[]; rec=new MediaRecorder(dest.stream); rec.ondataavailable=e=>chunks.push(e.data); rec.onstop=()=>{ lastBlob=new Blob(chunks,{type:'audio/webm'}); document.getElementById('mp3Status').innerText='✅ LISTO PARA DESCARGAR EN MP3 - Apretá el botón verde'; }; rec.start(); document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!'; document.getElementById('recStatus').style.color='#00ff00'; }
+function stopRec(){ if(rec) rec.stop(); document.getElementById('recStatus').innerText='⏹️ GRABACIÓN PARADA'; }
+async function downloadMP3(){
+  if(!lastBlob){ alert('Primero GRABÁ y apretá PARAR, Rey'); return; }
+  document.getElementById('mp3Status').innerText='⏳ CONVIRTIENDO A MP3... esperá 20 seg...';
+  try{
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: false });
+    await ffmpeg.load();
+    ffmpeg.FS('writeFile','mix.webm', await fetchFile(lastBlob));
+    await ffmpeg.run('-i','mix.webm','-q:a','2','mix.mp3');
+    const data = ffmpeg.FS('readFile','mix.mp3');
+    const blob = new Blob([data.buffer], {type:'audio/mpeg'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='DJ-REY-AYALA-PY-MIX.mp3'; a.click();
+    document.getElementById('mp3Status').innerText='✅ ¡MP3 DESCARGADO! Ya podés vender tu pendrive';
+  }catch(e){
+    const a=document.createElement('a'); a.href=URL.createObjectURL(lastBlob); a.download='DJ-REY-AYALA-PY-MIX.webm'; a.click();
+    document.getElementById('mp3Status').innerText='Se descargó en WEBM. Convertilo en convertio.co a MP3';
+  }
+}
 </script>
 </body>
-</html>
+  </html>
