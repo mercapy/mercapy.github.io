@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DJ MELODY PY PRO - DJ REY</title>
+<style>
+*{box-sizing:border-box} body{background:#0a0a0a;color:#fff;font-family:Arial;text-align:center;padding:12px;margin:0}
+.top{background:#111;border:2px solid #FFD700;border-radius:15px;padding:12px}
+h1{color:#FFD700;margin:5px;font-size:30px} .sub{color:#00E5FF;font-weight:bold}
+.wrap{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:12px}
+.deck{background:#1a1a1a;border:2px solid #333;border-radius:15px;padding:14px;width:340px;max-width:95vw}
+.deck.a{border-color:#FFD700}.deck.b{border-color:#00E5FF}
+button{background:#FFD700;border:none;padding:11px 14px;border-radius:10px;font-weight:bold;margin:4px;cursor:pointer}
+button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button.green{background:#00c853;color:#fff} button.gray{background:#333;color:#fff}
+label{font-size:12px;display:block;margin-top:8px} input[type=range]{width:100%}
+audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.mixer{background:#222;border:2px solid #FFD700;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
+#recStatus{font-weight:bold;color:#ff2d2d}
+</style>
+</head>
+<body>
+<div class="top"><div style="font-size:45px">🎧</div><h1>DJ MELODY PY PRO</h1><div class="sub">DJ REY AYALA • RADIO ONLINE MELODY PY • AREGUÁ</div><p>Subí tu música • Mezclá • Grabá • Descargá</p></div>
+
+<div class="wrap">
+<div class="deck a"><h2>🎵 DECK A</h2><input type="file" id="fA" accept="audio/*"><audio id="auA" controls></audio>
+<label>VOLUMEN A</label><input type="range" id="volA" min="0" max="1" step="0.01" value="0.8">
+<div class="eq"><div><label>GRAVES</label><input type="range" id="bassA" min="-15" max="15" value="0"></div><div><label>MEDIOS</label><input type="range" id="midA" min="-15" max="15" value="0"></div><div><label>AGUDOS</label><input type="range" id="treA" min="-15" max="15" value="0"></div></div>
+<label>TEMPO / VELOCIDAD</label><input type="range" id="spA" min="0.7" max="1.3" step="0.01" value="1"><span id="spATxt">1.00x</span><br>
+<button onclick="playA()">▶️ PLAY A</button><button class="gray" onclick="pauseA()">⏸️ PAUSA</button><button class="blue" onclick="cueA()">🎧 CUE</button><button class="gray" onclick="loopA()">🔁 LOOP</button><br>
+<button onclick="syncA()">🔄 SYNC A = B</button></div>
+
+<div class="deck b"><h2>🎵 DECK B</h2><input type="file" id="fB" accept="audio/*"><audio id="auB" controls></audio>
+<label>VOLUMEN B</label><input type="range" id="volB" min="0" max="1" step="0.01" value="0.8">
+<div class="eq"><div><label>GRAVES</label><input type="range" id="bassB" min="-15" max="15" value="0"></div><div><label>MEDIOS</label><input type="range" id="midB" min="-15" max="15" value="0"></div><div><label>AGUDOS</label><input type="range" id="treB" min="-15" max="15" value="0"></div></div>
+<label>TEMPO / VELOCIDAD</label><input type="range" id="spB" min="0.7" max="1.3" step="0.01" value="1"><span id="spBTxt">1.00x</span><br>
+<button onclick="playB()">▶️ PLAY B</button><button class="gray" onclick="pauseB()">⏸️ PAUSA</button><button class="blue" onclick="cueB()">🎧 CUE</button><button class="gray" onclick="loopB()">🔁 LOOP</button><br>
+<button onclick="syncB()">🔄 SYNC B = A</button></div>
+</div>
+
+<div class="mixer"><h2>🎚️ MEZCLADOR PROFESIONAL</h2>
+<p>⬅️ Todo A | Centro = Los 2 | Todo B ➡️</p>
+<input type="range" id="cross" min="0" max="100" value="50">
+<label>EFECTO ECHO</label><input type="range" id="echo" min="0" max="0.8" step="0.01" value="0">
+<br><button class="green" onclick="playBoth()">▶️ SONAR LOS 2</button><button class="gray" onclick="stopBoth()">⏹️ PARAR TODO</button>
+<hr><h3>🎤 MIC + GRABACIÓN</h3><p id="recStatus">● NO GRABANDO</p>
+<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="gray" onclick="stopRec()">⏹️ PARAR Y DESCARGAR</button>
+<br><button onclick="micAlert()">🎤 MIC - ¡SOY DJ REY!</button>
+<p style="font-size:12px;color:#aaa">Se descarga en .webm. Para MP3: subí ese archivo a convertio.co y elegí MP3.</p></div>
+
+<script>
+let ctx=new (window.AudioContext||window.webkitAudioContext)();
+let dest=ctx.createMediaStreamDestination();
+let master=ctx.createGain(); master.gain.value=1; master.connect(ctx.destination); master.connect(dest);
+function makeDeck(audioEl){
+  let src=ctx.createMediaElementSource(audioEl);
+  let gain=ctx.createGain(); let bass=ctx.createBiquadFilter(); bass.type='lowshelf'; bass.frequency.value=200;
+  let mid=ctx.createBiquadFilter(); mid.type='peaking'; mid.frequency.value=1000; mid.Q.value=1;
+  let tre=ctx.createBiquadFilter(); tre.type='highshelf'; tre.frequency.value=3000;
+  let delay=ctx.createDelay(1); delay.delayTime.value=0.25; let echoGain=ctx.createGain(); echoGain.gain.value=0;
+  let echoOut=ctx.createGain(); echoOut.gain.value=0.4;
+  src.connect(bass); bass.connect(mid); mid.connect(tre); tre.connect(gain); gain.connect(master);
+  gain.connect(delay); delay.connect(echoGain); echoGain.connect(echoOut); echoOut.connect(gain);
+  return {gain,bass,mid,tre,echoGain};
+}
+let A=makeDeck(document.getElementById('auA')), B=makeDeck(document.getElementById('auB'));
+let auA=document.getElementById('auA'), auB=document.getElementById('auB');
+document.getElementById('fA').onchange=e=>{auA.src=URL.createObjectURL(e.target.files[0]);ctx.resume();auA.play()};
+document.getElementById('fB').onchange=e=>{auB.src=URL.createObjectURL(e.target.files[0]);ctx.resume();auB.play()};
+function bind(id,fn){document.getElementById(id).oninput=e=>fn(e.target.value)}
+bind('volA',v=>A.gain.gain.value=v); bind('volB',v=>B.gain.gain.value=v);
+bind('bassA',v=>A.bass.gain.value=v); bind('midA',v=>A.mid.gain.value=v); bind('treA',v=>A.tre.gain.value=v);
+bind('bassB',v=>B.bass.gain.value=v); bind('midB',v=>B.mid.gain.value=v); bind('treB',v=>B.tre.gain.value=v);
+bind('spA',v=>{auA.playbackRate=v;document.getElementById('spATxt').innerText=parseFloat(v).toFixed(2)+'x'});
+bind('spB',v=>{auB.playbackRate=v;document.getElementById('spBTxt').innerText=parseFloat(v).toFixed(2)+'x'});
+bind('echo',v=>{A.echoGain.gain.value=v;B.echoGain.gain.value=v});
+document.getElementById('cross').oninput=e=>{let v=e.target.value/100; A.gain.gain.value=(1-v)*parseFloat(document.getElementById('volA').value); B.gain.gain.value=v*parseFloat(document.getElementById('volB').value);};
+function playA(){ctx.resume();auA.play()} function pauseA(){auA.pause()} function playB(){ctx.resume();auB.play()} function pauseB(){auB.pause()}
+function playBoth(){ctx.resume();auA.play();auB.play()} function stopBoth(){auA.pause();auB.pause()}
+function cueA(){auA.currentTime=0;auA.play()} function cueB(){auB.currentTime=0;auB.play()}
+function loopA(){auA.loop=!auA.loop;alert('Loop A: '+(auA.loop?'ON':'OFF'))} function loopB(){auB.loop=!auB.loop;alert('Loop B: '+(auB.loop?'ON':'OFF'))}
+function syncA(){auA.playbackRate=auB.playbackRate;document.getElementById('spA').value=auB.playbackRate;document.getElementById('spATxt').innerText=auB.playbackRate.toFixed(2)+'x'}
+function syncB(){auB.playbackRate=auA.playbackRate;document.getElementById('spB').value=auA.playbackRate;document.getElementById('spBTxt').innerText=auA.playbackRate.toFixed(2)+'x'}
+function micAlert(){alert('🎤 ¡HABLÁ REY! ¡ESTO ES DJ MELODY PY! ¡DJ REY AYALA!')}
+let rec=null,chunks=[]; function startRec(){chunks=[];rec=new MediaRecorder(dest.stream);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{let blob=new Blob(chunks,{type:'audio/webm'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DJ-MELODY-PY-MIX.webm';a.click()};rec.start();document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!';document.getElementById('recStatus').style.color='#00ff00'}
+function stopRec(){if(rec)rec.stop();document.getElementById('recStatus').innerText='✅ MIX GUARDADO - SE DESCARGÓ';}
+</script>
+</body>
+</html>
