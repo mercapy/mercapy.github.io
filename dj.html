@@ -58,10 +58,18 @@ audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 
 <br><button class="purple" onclick="startAutoMix()">🔥 AUTOMIX - MEZCLA SOLO</button><button class="gray" onclick="stopAutoMix()">⏹️ PARAR AUTOMIX</button>
 <br><button class="blue" onclick="mixRapido()">⚡ MIX RÁPIDO 3 SEG</button><button class="blue" onclick="mixSuave()">🌊 MIX SUAVE 8 SEG</button>
 <hr><h3>🎤 GRABACIÓN</h3><p id="recStatus">● NO GRABANDO</p><p id="mp3Status"></p>
-<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="gray" onclick="stopRec()">⏹️ PARAR Y DESCARGAR WEBM</button>
-<br><button class="green" style="font-size:17px;padding:15px 22px" onclick="abrirConvertir()">🟢 CONVERTIR A MP3 AQUÍ</button>
-<p style="font-size:12px;color:#aaa">1. Descargá en WEBM - 2. Apretá el botón verde - 3. Subí tu archivo en convertio - 4. Elegí MP3 - 5. Descargar</p></div>
+<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="gray" onclick="stopRec()">⏹️ PARAR Y GUARDAR</button>
+<br><br>
+<div style="background:#000;border:2px solid #00c853;border-radius:12px;padding:14px">
+<h3 style="color:#00ff00;margin:0">🟢 CONVERTIR A MP3 AQUÍ - SIN SALIR</h3>
+<p style="font-size:13px">1. Grabá y pará - 2. Apretá el botón verde - 3. Baja directo en MP3</p>
+<button class="green" style="font-size:18px;padding:16px 24px" onclick="convertirYDescargarMP3()">⬇️ CONVERTIR A MP3 Y DESCARGAR</button>
+<p id="convStatus" style="color:#00ff00;font-weight:bold"></p>
+</div>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.min.js"></script>
 <script>
 let ctx=new (window.AudioContext||window.webkitAudioContext)();
 let dest=ctx.createMediaStreamDestination();
@@ -93,14 +101,11 @@ function playA(){ctx.resume();auA.play()} function pauseA(){auA.pause()} functio
 function playBoth(){ctx.resume();auA.play();auB.play()} function stopBoth(){auA.pause();auB.pause();stopAutoMix()}
 function cueA(){auA.currentTime=0;auA.play()} function cueB(){auB.currentTime=0;auB.play()}
 function loopA(){auA.loop=!auA.loop;alert('Loop A: '+(auA.loop?'ON':'OFF'))} function loopB(){auB.loop=!auB.loop;alert('Loop B: '+(auB.loop?'ON':'OFF'))}
-
-// --- GRITA ---
 function hablar(texto){
   document.getElementById('gritaTxt').innerText='📢 ' + texto;
   try{ speechSynthesis.cancel(); }catch(e){}
   let u = new SpeechSynthesisUtterance(texto);
   u.lang='es-PY'; u.rate=0.95; u.pitch=0.6; u.volume=1;
-  // Busca voz masculina si hay
   let voces = speechSynthesis.getVoices();
   let v = voces.find(v=>v.lang.includes('es') && v.name.toLowerCase().includes('male')) || voces.find(v=>v.lang.includes('es'));
   if(v) u.voice=v;
@@ -126,7 +131,6 @@ function siren(){
   let f=400, dir=1; let t=setInterval(()=>{ f+=dir*50; if(f>900) dir=-1; if(f<400) dir=1; o.frequency.value=f; },30);
   setTimeout(()=>{clearInterval(t); o.stop();},1800);
 }
-
 let autoTimer=null;
 function doCrossfade(durationSec){
   let cross=document.getElementById('cross'); let start=parseFloat(cross.value); let target = start<50?100:0; let steps=durationSec*20; let step=(target-start)/steps; let i=0;
@@ -136,10 +140,32 @@ function startAutoMix(){ playBoth(); document.getElementById('mixStatus').innerT
 function stopAutoMix(){ clearInterval(autoTimer); document.getElementById('mixStatus').innerText='MIX MANUAL'; }
 function mixRapido(){ playBoth(); doCrossfade(3); }
 function mixSuave(){ playBoth(); doCrossfade(8); }
-let rec=null, chunks=[];
-function startRec(){ chunks=[]; rec=new MediaRecorder(dest.stream); rec.ondataavailable=e=>chunks.push(e.data); rec.onstop=()=>{ let blob=new Blob(chunks,{type:'audio/webm'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='DJ-REY-AYALA-PY-MIX.webm'; a.click(); document.getElementById('mp3Status').innerText='✅ BAJÓ EN WEBM. Ahora apretá CONVERTIR A MP3'; }; rec.start(); document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!'; document.getElementById('recStatus').style.color='#00ff00'; }
+
+// --- GRABACION + MP3 ---
+let rec=null, chunks=[], lastWebmBlob=null;
+function startRec(){ chunks=[]; lastWebmBlob=null; rec=new MediaRecorder(dest.stream); rec.ondataavailable=e=>chunks.push(e.data); rec.onstop=()=>{ lastWebmBlob=new Blob(chunks,{type:'audio/webm'}); document.getElementById('mp3Status').innerText='✅ GRABADO. Ahora apretá CONVERTIR A MP3 Y DESCARGAR'; }; rec.start(); document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!'; document.getElementById('recStatus').style.color='#00ff00'; }
 function stopRec(){ if(rec) rec.stop(); document.getElementById('recStatus').innerText='⏹️ GRABACIÓN PARADA'; }
-function abrirConvertir(){ window.open('https://convertio.co/webm-mp3/','_blank'); }
+
+let ffmpegCargado=false;
+async function convertirYDescargarMP3(){
+  if(!lastWebmBlob){ alert('Primero GRABÁ y PARÁ, REY. Después apretá este botón.'); return; }
+  document.getElementById('convStatus').innerText='⏳ CONVIRTIENDO A MP3... Esperá 10-20 seg...';
+  try{
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log:false });
+    if(!ffmpegCargado){ await ffmpeg.load(); ffmpegCargado=true; }
+    await ffmpeg.writeFile('mix.webm', await fetchFile(lastWebmBlob));
+    await ffmpeg.exec(['-i','mix.webm','-vn','-ar','44100','-ac','2','-b:a','192k','DJ-REY-AYALA-PY-MIX.mp3']);
+    const data = await ffmpeg.readFile('DJ-REY-AYALA-PY-MIX.mp3');
+    let blob = new Blob([data.buffer], {type:'audio/mp3'});
+    let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='DJ-REY-AYALA-PY-MIX.mp3'; a.click();
+    document.getElementById('convStatus').innerText='✅ ¡LISTO REY! BAJÓ EN MP3';
+    document.getElementById('mp3Status').innerText='✅ BAJÓ EN MP3 - DJ REY AYALA PY';
+  }catch(e){
+    document.getElementById('convStatus').innerText='Si falla, usá Convertio';
+    window.open('https://convertio.co/webm-mp3/','_blank');
+  }
+}
 </script>
 </body>
-  </html>
+</html>
