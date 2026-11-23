@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DJ MELODY PY PRO - DJ REY</title>
+<title>DJ MELODY PY PRO - DJ REY + AUTOMIX</title>
 <style>
 *{box-sizing:border-box} body{background:#0a0a0a;color:#fff;font-family:Arial;text-align:center;padding:12px;margin:0}
 .top{background:#111;border:2px solid #FFD700;border-radius:15px;padding:12px}
@@ -12,41 +12,41 @@ h1{color:#FFD700;margin:5px;font-size:30px} .sub{color:#00E5FF;font-weight:bold}
 .deck{background:#1a1a1a;border:2px solid #333;border-radius:15px;padding:14px;width:340px;max-width:95vw}
 .deck.a{border-color:#FFD700}.deck.b{border-color:#00E5FF}
 button{background:#FFD700;border:none;padding:11px 14px;border-radius:10px;font-weight:bold;margin:4px;cursor:pointer}
-button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button.green{background:#00c853;color:#fff} button.gray{background:#333;color:#fff}
+button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button.green{background:#00c853;color:#fff} button.gray{background:#333;color:#fff} button.purple{background:#a100ff;color:#fff}
 label{font-size:12px;display:block;margin-top:8px} input[type=range]{width:100%}
 audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .mixer{background:#222;border:2px solid #FFD700;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
-#recStatus{font-weight:bold;color:#ff2d2d}
+#recStatus{font-weight:bold;color:#ff2d2d} #mixStatus{font-weight:bold;color:#00E5FF}
 </style>
 </head>
 <body>
-<div class="top"><div style="font-size:45px">🎧</div><h1>DJ MELODY PY PRO</h1><div class="sub">DJ REY AYALA • RADIO ONLINE MELODY PY • AREGUÁ</div><p>Subí tu música • Mezclá • Grabá • Descargá</p></div>
+<div class="top"><div style="font-size:45px">🎧</div><h1>DJ MELODY PY PRO</h1><div class="sub">DJ REY AYALA • RADIO ONLINE MELODY PY • AREGUÁ</div><p>Subí tu música • Mezclá • Automix • Grabá</p></div>
 
 <div class="wrap">
 <div class="deck a"><h2>🎵 DECK A</h2><input type="file" id="fA" accept="audio/*"><audio id="auA" controls></audio>
 <label>VOLUMEN A</label><input type="range" id="volA" min="0" max="1" step="0.01" value="0.8">
 <div class="eq"><div><label>GRAVES</label><input type="range" id="bassA" min="-15" max="15" value="0"></div><div><label>MEDIOS</label><input type="range" id="midA" min="-15" max="15" value="0"></div><div><label>AGUDOS</label><input type="range" id="treA" min="-15" max="15" value="0"></div></div>
-<label>TEMPO / VELOCIDAD</label><input type="range" id="spA" min="0.7" max="1.3" step="0.01" value="1"><span id="spATxt">1.00x</span><br>
-<button onclick="playA()">▶️ PLAY A</button><button class="gray" onclick="pauseA()">⏸️ PAUSA</button><button class="blue" onclick="cueA()">🎧 CUE</button><button class="gray" onclick="loopA()">🔁 LOOP</button><br>
-<button onclick="syncA()">🔄 SYNC A = B</button></div>
+<label>TEMPO</label><input type="range" id="spA" min="0.7" max="1.3" step="0.01" value="1"><span id="spATxt">1.00x</span><br>
+<button onclick="playA()">▶️ PLAY A</button><button class="gray" onclick="pauseA()">⏸️ PAUSA</button><button class="blue" onclick="cueA()">🎧 CUE</button><button class="gray" onclick="loopA()">🔁 LOOP</button></div>
 
 <div class="deck b"><h2>🎵 DECK B</h2><input type="file" id="fB" accept="audio/*"><audio id="auB" controls></audio>
 <label>VOLUMEN B</label><input type="range" id="volB" min="0" max="1" step="0.01" value="0.8">
 <div class="eq"><div><label>GRAVES</label><input type="range" id="bassB" min="-15" max="15" value="0"></div><div><label>MEDIOS</label><input type="range" id="midB" min="-15" max="15" value="0"></div><div><label>AGUDOS</label><input type="range" id="treB" min="-15" max="15" value="0"></div></div>
-<label>TEMPO / VELOCIDAD</label><input type="range" id="spB" min="0.7" max="1.3" step="0.01" value="1"><span id="spBTxt">1.00x</span><br>
-<button onclick="playB()">▶️ PLAY B</button><button class="gray" onclick="pauseB()">⏸️ PAUSA</button><button class="blue" onclick="cueB()">🎧 CUE</button><button class="gray" onclick="loopB()">🔁 LOOP</button><br>
-<button onclick="syncB()">🔄 SYNC B = A</button></div>
+<label>TEMPO</label><input type="range" id="spB" min="0.7" max="1.3" step="0.01" value="1"><span id="spBTxt">1.00x</span><br>
+<button onclick="playB()">▶️ PLAY B</button><button class="gray" onclick="pauseB()">⏸️ PAUSA</button><button class="blue" onclick="cueB()">🎧 CUE</button><button class="gray" onclick="loopB()">🔁 LOOP</button></div>
 </div>
 
-<div class="mixer"><h2>🎚️ MEZCLADOR PROFESIONAL</h2>
+<div class="mixer"><h2>🎚️ MEZCLADOR + AUTOMIX</h2>
+<p id="mixStatus">MIX MANUAL</p>
 <p>⬅️ Todo A | Centro = Los 2 | Todo B ➡️</p>
 <input type="range" id="cross" min="0" max="100" value="50">
 <label>EFECTO ECHO</label><input type="range" id="echo" min="0" max="0.8" step="0.01" value="0">
 <br><button class="green" onclick="playBoth()">▶️ SONAR LOS 2</button><button class="gray" onclick="stopBoth()">⏹️ PARAR TODO</button>
-<hr><h3>🎤 MIC + GRABACIÓN</h3><p id="recStatus">● NO GRABANDO</p>
+<br><button class="purple" onclick="startAutoMix()">🔥 AUTOMIX - MEZCLA SOLO</button><button class="gray" onclick="stopAutoMix()">⏹️ PARAR AUTOMIX</button>
+<br><button class="blue" onclick="mixRapido()">⚡ MIX RÁPIDO 3 SEG</button><button class="blue" onclick="mixSuave()">🌊 MIX SUAVE 8 SEG</button>
+<hr><h3>🎤 GRABACIÓN</h3><p id="recStatus">● NO GRABANDO</p>
 <button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="gray" onclick="stopRec()">⏹️ PARAR Y DESCARGAR</button>
-<br><button onclick="micAlert()">🎤 MIC - ¡SOY DJ REY!</button>
-<p style="font-size:12px;color:#aaa">Se descarga en .webm. Para MP3: subí ese archivo a convertio.co y elegí MP3.</p></div>
+<br><button onclick="micAlert()">🎤 MIC - ¡SOY DJ REY!</button></div>
 
 <script>
 let ctx=new (window.AudioContext||window.webkitAudioContext)();
@@ -76,12 +76,20 @@ bind('spB',v=>{auB.playbackRate=v;document.getElementById('spBTxt').innerText=pa
 bind('echo',v=>{A.echoGain.gain.value=v;B.echoGain.gain.value=v});
 document.getElementById('cross').oninput=e=>{let v=e.target.value/100; A.gain.gain.value=(1-v)*parseFloat(document.getElementById('volA').value); B.gain.gain.value=v*parseFloat(document.getElementById('volB').value);};
 function playA(){ctx.resume();auA.play()} function pauseA(){auA.pause()} function playB(){ctx.resume();auB.play()} function pauseB(){auB.pause()}
-function playBoth(){ctx.resume();auA.play();auB.play()} function stopBoth(){auA.pause();auB.pause()}
+function playBoth(){ctx.resume();auA.play();auB.play()} function stopBoth(){auA.pause();auB.pause();stopAutoMix()}
 function cueA(){auA.currentTime=0;auA.play()} function cueB(){auB.currentTime=0;auB.play()}
 function loopA(){auA.loop=!auA.loop;alert('Loop A: '+(auA.loop?'ON':'OFF'))} function loopB(){auB.loop=!auB.loop;alert('Loop B: '+(auB.loop?'ON':'OFF'))}
-function syncA(){auA.playbackRate=auB.playbackRate;document.getElementById('spA').value=auB.playbackRate;document.getElementById('spATxt').innerText=auB.playbackRate.toFixed(2)+'x'}
-function syncB(){auB.playbackRate=auA.playbackRate;document.getElementById('spB').value=auA.playbackRate;document.getElementById('spBTxt').innerText=auA.playbackRate.toFixed(2)+'x'}
 function micAlert(){alert('🎤 ¡HABLÁ REY! ¡ESTO ES DJ MELODY PY! ¡DJ REY AYALA!')}
+// --- AUTOMIX ---
+let autoTimer=null, autoDir=1;
+function doCrossfade(durationSec){
+  let cross=document.getElementById('cross'); let start=parseFloat(cross.value); let target = start<50?100:0; let steps=durationSec*20; let step=(target-start)/steps; let i=0;
+  clearInterval(autoTimer); autoTimer=setInterval(()=>{ i++; cross.value=parseFloat(cross.value)+step; cross.dispatchEvent(new Event('input')); if(i>=steps){clearInterval(autoTimer);} },50);
+}
+function startAutoMix(){ playBoth(); document.getElementById('mixStatus').innerText='🔥 AUTOMIX ENCENDIDO - MEZCLANDO SOLO...'; setTimeout(()=>doCrossfade(6),2000); autoTimer=setInterval(()=>{ doCrossfade(6); },12000); }
+function stopAutoMix(){ clearInterval(autoTimer); document.getElementById('mixStatus').innerText='MIX MANUAL'; }
+function mixRapido(){ playBoth(); doCrossfade(3); }
+function mixSuave(){ playBoth(); doCrossfade(8); }
 let rec=null,chunks=[]; function startRec(){chunks=[];rec=new MediaRecorder(dest.stream);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{let blob=new Blob(chunks,{type:'audio/webm'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DJ-MELODY-PY-MIX.webm';a.click()};rec.start();document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!';document.getElementById('recStatus').style.color='#00ff00'}
 function stopRec(){if(rec)rec.stop();document.getElementById('recStatus').innerText='✅ MIX GUARDADO - SE DESCARGÓ';}
 </script>
