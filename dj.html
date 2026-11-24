@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DJ REY AYALA PY - PRO</title>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
+<title>DJ REY AYALA PY - CAACUPE</title>
 <style>
 *{box-sizing:border-box} body{background:#0a0a0a;color:#fff;font-family:Arial;text-align:center;padding:12px;margin:0}
 .top{background:#111;border:2px solid #FFD700;border-radius:15px;padding:12px}
@@ -13,15 +12,25 @@ h1{color:#FFD700;margin:5px;font-size:30px} .sub{color:#00E5FF;font-weight:bold}
 .deck{background:#1a1a1a;border:2px solid #333;border-radius:15px;padding:14px;width:340px;max-width:95vw}
 .deck.a{border-color:#FFD700}.deck.b{border-color:#00E5FF}
 button{background:#FFD700;border:none;padding:11px 14px;border-radius:10px;font-weight:bold;margin:4px;cursor:pointer}
-button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button.green{background:#00c853;color:#fff} button.gray{background:#333;color:#fff} button.purple{background:#a100ff;color:#fff}
+button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button.green{background:#00c853;color:#fff} button.gray{background:#333;color:#fff} button.purple{background:#a100ff;color:#fff} button.orange{background:#ff6a00;color:#fff}
 label{font-size:12px;display:block;margin-top:8px} input[type=range]{width:100%}
 audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .mixer{background:#222;border:2px solid #FFD700;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
 #recStatus{font-weight:bold;color:#ff2d2d} #mixStatus{font-weight:bold;color:#00E5FF} #mp3Status{font-weight:bold;color:#00ff00}
+.shoutBox{background:#2a0a00;border:2px solid #ff6a00;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
+textarea{width:100%;height:65px;font-size:18px;padding:10px;border-radius:10px;border:2px solid #FFD700;background:#000;color:#fff;text-align:center;font-weight:bold}
 </style>
 </head>
 <body>
-<div class="top"><div style="font-size:45px">👑🎧</div><h1>DJ REY AYALA PY</h1><div class="sub">DJ REY AYALA PY • AREGUÁ - PARAGUAY</div><p>Subí tu música • Mezclá • Automix • Grabá en MP3</p></div>
+<div class="top"><div style="font-size:45px">👑🎧🙏</div><h1>DJ REY AYALA PY</h1><div class="sub">DJ REY AYALA PY • CAACUPÉ - PARAGUAY</div><p>Subí tu música • Mezclá • Automix • Grabá • Grita</p></div>
+
+<div class="shoutBox">
+<h2 style="color:#ff6a00;margin:0">📢 GRITO DJ REY DE CAACUPÉ</h2><br>
+<textarea id="textoDrop">¡DJ REY AYALA PARAGUAY! ¡EL REY DE CAACUPÉ! ¡QUE SUENE LA CUMBIA!</textarea><br>
+<button class="orange" onclick="hablarDrop()">📢 ESCUCHAR GRITO</button>
+<button class="red" onclick="grabarDrop()">🔴 GRABAR GRITO Y BAJAR MP3 GRATIS</button>
+<p id="dropStatus" style="color:#00ff00;font-weight:bold"></p>
+</div>
 
 <div class="wrap">
 <div class="deck a"><h2>🎵 DECK A</h2><input type="file" id="fA" accept="audio/*"><audio id="auA" controls></audio>
@@ -45,11 +54,13 @@ audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 
 <br><button class="green" onclick="playBoth()">▶️ SONAR LOS 2</button><button class="gray" onclick="stopBoth()">⏹️ PARAR TODO</button>
 <br><button class="purple" onclick="startAutoMix()">🔥 AUTOMIX - MEZCLA SOLO</button><button class="gray" onclick="stopAutoMix()">⏹️ PARAR AUTOMIX</button>
 <br><button class="blue" onclick="mixRapido()">⚡ MIX RÁPIDO 3 SEG</button><button class="blue" onclick="mixSuave()">🌊 MIX SUAVE 8 SEG</button>
-<hr><h3>🎤 GRABACIÓN EN MP3</h3><p id="recStatus">● NO GRABANDO</p><p id="mp3Status"></p>
-<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="gray" onclick="stopRec()">⏹️ PARAR</button>
-<br><button class="green" style="font-size:16px;padding:14px 20px" onclick="downloadMP3()">🟢 DESCARGAR EN MP3 - LISTO</button>
-<br><button onclick="micAlert()">🎤 MIC - ¡SOY DJ REY!</button></div>
+<hr><h3>🎤 GRABACIÓN COMPLETA EN MP3 GRATIS</h3><p id="recStatus">● NO GRABANDO</p><p id="mp3Status"></p>
+<button class="red" onclick="startRec()">🔴 GRABAR MIX COMPLETO</button><button class="green" style="font-size:18px;padding:16px" onclick="stopRec()">⏹️ PARAR Y BAJAR EN MP3 GRATIS</button>
+<p id="convStatus" style="color:#00ff00;font-weight:bold"></p>
+<br><button onclick="micAlert()">🎤 MIC - ¡SOY DJ REY AYALA PY!</button></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.min.js"></script>
 <script>
 let ctx=new (window.AudioContext||window.webkitAudioContext)();
 let dest=ctx.createMediaStreamDestination();
@@ -81,36 +92,44 @@ function playA(){ctx.resume();auA.play()} function pauseA(){auA.pause()} functio
 function playBoth(){ctx.resume();auA.play();auB.play()} function stopBoth(){auA.pause();auB.pause();stopAutoMix()}
 function cueA(){auA.currentTime=0;auA.play()} function cueB(){auB.currentTime=0;auB.play()}
 function loopA(){auA.loop=!auA.loop;alert('Loop A: '+(auA.loop?'ON':'OFF'))} function loopB(){auB.loop=!auB.loop;alert('Loop B: '+(auB.loop?'ON':'OFF'))}
-function micAlert(){alert('🎤 ¡HABLÁ REY! ¡ESTO ES DJ REY AYALA PY!')}
-let autoTimer=null;
+function micAlert(){alert('🎤 ¡HABLÁ REY! ¡ESTO ES DJ REY AYALA PY! ¡CAACUPÉ!')}
+function hablarDrop(){ let t=document.getElementById('textoDrop').value; speechSynthesis.cancel(); let u=new SpeechSynthesisUtterance(t); u.lang='es-PY'; u.rate=0.9; u.pitch=0.5; u.volume=1; speechSynthesis.speak(u); }
+// --- AUTOMIX ---
+let autoTimer=null, autoDir=1;
 function doCrossfade(durationSec){
   let cross=document.getElementById('cross'); let start=parseFloat(cross.value); let target = start<50?100:0; let steps=durationSec*20; let step=(target-start)/steps; let i=0;
   clearInterval(autoTimer); autoTimer=setInterval(()=>{ i++; cross.value=parseFloat(cross.value)+step; cross.dispatchEvent(new Event('input')); if(i>=steps){clearInterval(autoTimer);} },50);
 }
-function startAutoMix(){ playBoth(); document.getElementById('mixStatus').innerText='🔥 AUTOMIX ENCENDIDO'; setTimeout(()=>doCrossfade(6),2000); autoTimer=setInterval(()=>{ doCrossfade(6); },12000); }
+function startAutoMix(){ playBoth(); document.getElementById('mixStatus').innerText='🔥 AUTOMIX ENCENDIDO - MEZCLANDO SOLO...'; setTimeout(()=>doCrossfade(6),2000); autoTimer=setInterval(()=>{ doCrossfade(6); },12000); }
 function stopAutoMix(){ clearInterval(autoTimer); document.getElementById('mixStatus').innerText='MIX MANUAL'; }
 function mixRapido(){ playBoth(); doCrossfade(3); }
 function mixSuave(){ playBoth(); doCrossfade(8); }
-let rec=null, chunks=[], lastBlob=null;
-function startRec(){ chunks=[]; rec=new MediaRecorder(dest.stream); rec.ondataavailable=e=>chunks.push(e.data); rec.onstop=()=>{ lastBlob=new Blob(chunks,{type:'audio/webm'}); document.getElementById('mp3Status').innerText='✅ LISTO PARA DESCARGAR EN MP3 - Apretá el botón verde'; }; rec.start(); document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!'; document.getElementById('recStatus').style.color='#00ff00'; }
-function stopRec(){ if(rec) rec.stop(); document.getElementById('recStatus').innerText='⏹️ GRABACIÓN PARADA'; }
-async function downloadMP3(){
-  if(!lastBlob){ alert('Primero GRABÁ y apretá PARAR, Rey'); return; }
-  document.getElementById('mp3Status').innerText='⏳ CONVIRTIENDO A MP3... esperá 20 seg...';
+// --- GRABAR MIX COMPLETO MP3 GRATIS ---
+let rec=null,chunks=[],lastWebm=null,ffmpegCargado=false;
+function startRec(){chunks=[];lastWebm=null;rec=new MediaRecorder(dest.stream);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{lastWebm=new Blob(chunks,{type:'audio/webm'});document.getElementById('mp3Status').innerText='✅ GRABADO. Convirtiendo a MP3 gratis...';setTimeout(convertirMP3,500);};rec.start();document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY DE CAACUPÉ!';document.getElementById('recStatus').style.color='#00ff00';document.getElementById('convStatus').innerText='';}
+function stopRec(){if(rec)rec.stop();document.getElementById('recStatus').innerText='⏹️ PARANDO... BAJANDO MP3 GRATIS...';}
+async function convertirMP3(){
+  if(!lastWebm) return; document.getElementById('convStatus').innerText='⏳ CONVIRTIENDO A MP3... Esperá 10-20 seg...';
   try{
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: false });
-    await ffmpeg.load();
-    ffmpeg.FS('writeFile','mix.webm', await fetchFile(lastBlob));
-    await ffmpeg.run('-i','mix.webm','-q:a','2','mix.mp3');
-    const data = ffmpeg.FS('readFile','mix.mp3');
-    const blob = new Blob([data.buffer], {type:'audio/mpeg'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='DJ-REY-AYALA-PY-MIX.mp3'; a.click();
-    document.getElementById('mp3Status').innerText='✅ ¡MP3 DESCARGADO! Ya podés vender tu pendrive';
-  }catch(e){
-    const a=document.createElement('a'); a.href=URL.createObjectURL(lastBlob); a.download='DJ-REY-AYALA-PY-MIX.webm'; a.click();
-    document.getElementById('mp3Status').innerText='Se descargó en WEBM. Convertilo en convertio.co a MP3';
-  }
+    const {createFFmpeg, fetchFile}=FFmpeg; const ffmpeg=createFFmpeg({log:false});
+    if(!ffmpegCargado){await ffmpeg.load(); ffmpegCargado=true;}
+    await ffmpeg.writeFile('mix.webm', await fetchFile(lastWebm));
+    await ffmpeg.exec(['-i','mix.webm','-vn','-ar','44100','-ac','2','-b:a','192k','DJ-REY-AYALA-CAACUPE-MIX.mp3']);
+    const data=await ffmpeg.readFile('DJ-REY-AYALA-CAACUPE-MIX.mp3');
+    let blob=new Blob([data.buffer],{type:'audio/mp3'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='DJ-REY-AYALA-CAACUPE-MIX.mp3'; a.click();
+    document.getElementById('convStatus').innerText='✅ ¡LISTO REY! BAJÓ EN MP3 GRATIS - COMPLETO'; document.getElementById('recStatus').innerText='● NO GRABANDO';
+  }catch(e){ document.getElementById('convStatus').innerText='Intentá de nuevo, es gratis'; }
+}
+async function grabarDrop(){
+  document.getElementById('dropStatus').innerText='🔴 GRABANDO TU GRITO... Poné volumen fuerte';
+  try{
+    let stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    let rec2=new MediaRecorder(stream); let ch2=[]; rec2.ondataavailable=e=>ch2.push(e.data);
+    rec2.onstop=async()=>{ stream.getTracks().forEach(t=>t.stop()); let webm=new Blob(ch2,{type:'audio/webm'}); document.getElementById('dropStatus').innerText='⏳ CONVIRTIENDO GRITO A MP3 GRATIS...';
+      try{ const {createFFmpeg, fetchFile}=FFmpeg; const ffmpeg=createFFmpeg({log:false}); if(!ffmpegCargado){await ffmpeg.load(); ffmpegCargado=true;} await ffmpeg.writeFile('drop.webm', await fetchFile(webm)); await ffmpeg.exec(['-i','drop.webm','-vn','-ar','44100','-ac','2','-b:a','192k','DJ-REY-CAACUPE-DROP.mp3']); const data=await ffmpeg.readFile('DJ-REY-CAACUPE-DROP.mp3'); let blob=new Blob([data.buffer],{type:'audio/mp3'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='DJ-REY-CAACUPE-DROP.mp3'; a.click(); document.getElementById('dropStatus').innerText='✅ ¡LISTO! BAJÓ TU GRITO EN MP3 GRATIS'; }catch(e){ document.getElementById('dropStatus').innerText='Intentá de nuevo'; }
+    };
+    rec2.start(); setTimeout(()=>{hablarDrop();},500); setTimeout(()=>{rec2.stop();},6000);
+  }catch(e){ document.getElementById('dropStatus').innerText='Permitile el micrófono al celu'; }
 }
 </script>
 </body>
