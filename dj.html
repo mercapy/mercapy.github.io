@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DJ REY AYALA PY - PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.0/lame.min.js"></script>
 <style>
 *{box-sizing:border-box} body{background:#0a0a0a;color:#fff;font-family:Arial;text-align:center;padding:12px;margin:0}
 .top{background:#111;border:2px solid #FFD700;border-radius:15px;padding:12px}
@@ -57,12 +58,12 @@ audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 
 <br><button class="green" onclick="playBoth()">▶️ SONAR LOS 2</button><button class="gray" onclick="stopBoth()">⏹️ PARAR TODO</button>
 <br><button class="purple" onclick="startAutoMix()">🔥 AUTOMIX - MEZCLA SOLO</button><button class="gray" onclick="stopAutoMix()">⏹️ PARAR AUTOMIX</button>
 <br><button class="blue" onclick="mixRapido()">⚡ MIX RÁPIDO 3 SEG</button><button class="blue" onclick="mixSuave()">🌊 MIX SUAVE 8 SEG</button>
-<hr><h3>🎤 GRABACIÓN - AHORA SI BAJA</h3><p id="recStatus">● NO GRABANDO</p><p id="mp3Status"></p>
-<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="green" onclick="stopRec()">⏹️ PARAR Y BAJAR SOLO</button>
+<hr><h3>🎤 GRABACIÓN - AHORA BAJA EN MP3 DIRECTO</h3><p id="recStatus">● NO GRABANDO</p><p id="mp3Status"></p>
+<button class="red" onclick="startRec()">🔴 GRABAR MIX</button><button class="green" onclick="stopRec()">⏹️ PARAR Y BAJAR EN MP3</button>
 <br><br>
 <button class="gray" onclick="descargarDeNuevo()">⬇️ SI NO BAJÓ, TOCÁ ACÁ PARA BAJAR DE NUEVO</button>
 <p id="convStatus" style="color:#00ff00;font-weight:bold"></p>
-<p style="font-size:12px;color:#aaa">Baja en .webm, se escucha en WhatsApp y en el celu igual que MP3. Ya no te lleva a Convertio.</p>
+<p style="font-size:12px;color:#aaa">Ahora baja en .mp3 directo. Sin webm, sin Convertio, sin wav.</p>
 </div>
 
 <script>
@@ -136,8 +137,8 @@ function stopAutoMix(){ clearInterval(autoTimer); document.getElementById('mixSt
 function mixRapido(){ playBoth(); doCrossfade(3); }
 function mixSuave(){ playBoth(); doCrossfade(8); }
 
-// --- GRABACION ARREGLADA - SIN FFMPEG, SIN CONVERTIO, BAJA SOLO ---
-let rec=null, chunks=[], lastWebmBlob=null;
+// --- GRABACION EN MP3 DIRECTO CON LAMEJS ---
+let recorderNode=null, mp3Chunks=[], lastMp3Blob=null, grabando=false;
 function bajarBlob(blob, nombre){
   let url=URL.createObjectURL(blob);
   let a=document.createElement('a'); a.href=url; a.download=nombre;
@@ -146,30 +147,60 @@ function bajarBlob(blob, nombre){
 }
 function startRec(){
   ctx.resume();
-  chunks=[]; lastWebmBlob=null;
-  try{ rec=new MediaRecorder(dest.stream); }catch(e){ alert('Usá Chrome, Rey'); return; }
-  rec.ondataavailable=e=>{ if(e.data && e.data.size>0) chunks.push(e.data); };
-  rec.onstop=()=>{
-    lastWebmBlob=new Blob(chunks,{type:'audio/webm'});
-    document.getElementById('mp3Status').innerText='✅ GRABADO '+Math.round(lastWebmBlob.size/1024)+' KB - BAJANDO...';
-    bajarBlob(lastWebmBlob, 'DJ-REY-AYALA-CAACUPE-MIX.webm');
-    document.getElementById('convStatus').innerText='✅ ¡BAJÓ! Buscalo en Descargas de tu celu';
+  mp3Chunks=[]; lastMp3Blob=null; grabando=true;
+  recorderNode = ctx.createScriptProcessor(4096, 1, 1);
+  recorderNode.onaudioprocess = e => {
+    if(!grabando) return;
+    let input = e.inputBuffer.getChannelData(0);
+    let int16 = new Int16Array(input.length);
+    for(let i=0;i<input.length;i++){ let s=Math.max(-1, Math.min(1, input[i])); int16[i] = s<0 ? s*0x8000 : s*0x7FFF; }
+    mp3Chunks.push(new Int16Array(int16));
   };
-  rec.start(250);
-  document.getElementById('recStatus').innerText='🔴 GRABANDO... ¡MEZCLÁ REY!';
+  master.connect(recorderNode);
+  recorderNode.connect(ctx.destination);
+  document.getElementById('recStatus').innerText='🔴 GRABANDO EN MP3... ¡MEZCLÁ REY!';
   document.getElementById('recStatus').style.color='#00ff00';
   document.getElementById('convStatus').innerText='';
   document.getElementById('mp3Status').innerText='';
 }
 function stopRec(){
-  if(!rec){ alert('Primero tocá GRABAR'); return; }
-  rec.stop();
-  document.getElementById('recStatus').innerText='⏹️ PARANDO Y BAJANDO...';
+  if(!grabando){ alert('Primero tocá GRABAR'); return; }
+  grabando=false;
+  try{ master.disconnect(recorderNode); recorderNode.disconnect(); }catch(e){}
+  document.getElementById('recStatus').innerText='⏹️ CONVIRTIENDO A MP3... Esperá 2 segundos';
+  document.getElementById('mp3Status').innerText='⏳ Convirtiendo a MP3...';
+  setTimeout(()=>{
+    try{
+      let sampleRate = ctx.sampleRate;
+      let encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
+      let mp3Data = [];
+      let blockSize = 1152;
+      // juntar todo
+      let totalLen = 0; mp3Chunks.forEach(c=> totalLen += c.length);
+      let all = new Int16Array(totalLen); let off=0;
+      mp3Chunks.forEach(c=>{ all.set(c, off); off+=c.length; });
+      for(let i=0;i<all.length;i+=blockSize){
+        let chunk = all.subarray(i, i+blockSize);
+        let data = encoder.encodeBuffer(chunk);
+        if(data.length>0) mp3Data.push(new Int8Array(data));
+      }
+      let end = encoder.flush();
+      if(end.length>0) mp3Data.push(new Int8Array(end));
+      lastMp3Blob = new Blob(mp3Data, {type:'audio/mp3'});
+      document.getElementById('mp3Status').innerText='✅ GRABADO '+Math.round(lastMp3Blob.size/1024)+' KB - BAJANDO EN MP3...';
+      bajarBlob(lastMp3Blob, 'DJ-REY-AYALA-CAACUPE-MIX.mp3');
+      document.getElementById('convStatus').innerText='✅ ¡BAJÓ EN MP3! Buscalo en Descargas - Ese sí agarra TikTok';
+      document.getElementById('recStatus').innerText='⏹️ PARADO Y BAJADO EN MP3';
+    }catch(e){
+      alert('Error MP3: '+e.message+' - Revisá que tengas internet para cargar la librería');
+      document.getElementById('mp3Status').innerText='❌ Error, intentá de nuevo con internet';
+    }
+  }, 100);
 }
 function descargarDeNuevo(){
-  if(!lastWebmBlob){ alert('Primero GRABÁ y PARÁ'); return; }
-  bajarBlob(lastWebmBlob, 'DJ-REY-AYALA-CAACUPE-MIX.webm');
-  document.getElementById('convStatus').innerText='✅ ¡BAJÓ DE NUEVO! Buscalo en Descargas';
+  if(!lastMp3Blob){ alert('Primero GRABÁ y PARÁ'); return; }
+  bajarBlob(lastMp3Blob, 'DJ-REY-AYALA-CAACUPE-MIX.mp3');
+  document.getElementById('convStatus').innerText='✅ ¡BAJÓ DE NUEVO EN MP3!';
 }
 </script>
 </body>
