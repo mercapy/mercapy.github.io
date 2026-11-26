@@ -13,16 +13,37 @@ h1{color:#FFD700;margin:5px;font-size:32px} .sub{color:#00E5FF;font-weight:bold}
 .deck{background:#1a1a1a;border:2px solid #333;border-radius:15px;padding:14px;width:340px;max-width:95vw}
 .deck.a{border-color:#FFD700}.deck.b{border-color:#00E5FF}
 button{background:#FFD700;border:none;padding:11px 14px;border-radius:10px;font-weight:bold;margin:4px;cursor:pointer}
-button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button.green{background:#00c853;color:#fff} button.gray{background:#333;color:#fff} button.purple{background:#a100ff;color:#fff} button.orange{background:#ff6a00;color:#fff}
+button.blue{background:#00E5FF} button.red{background:#ff2d2d;color:#fff} button.green{background:#00c853;color:#fff} button.gray{background:#333;color:#fff} button.purple{background:#a100ff;color:#fff} button.orange{background:#ff6a00;color:#fff} button.pink{background:#ff007f;color:#fff} button.cyan{background:#00e5ff;color:#000} button.yellow{background:#ffee00;color:#000}
 label{font-size:12px;display:block;margin-top:8px} input[type=range]{width:100%}
 audio{width:100%;margin-top:8px} .eq{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .mixer{background:#222;border:2px solid #FFD700;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
 #recStatus{font-weight:bold;color:#ff2d2d} #mixStatus{font-weight:bold;color:#00E5FF} #mp3Status{font-weight:bold;color:#00ff00}
 .shoutBox{background:#2a0a00;border:2px solid #ff6a00;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
+.clases{background:#1a0033;border:2px solid #a100ff;border-radius:15px;padding:15px;width:720px;max-width:95vw;margin:12px auto}
+.clases button{font-size:15px;padding:13px 16px}
+#claseActual{font-size:20px;color:#FFD700;font-weight:bold}
 </style>
 </head>
 <body>
 <div class="top"><div style="font-size:45px">👑🎧</div><h1>DJ REY AYALA PY</h1><div class="sub">DJ REY AYALA PY • CAACUPÉ - PARAGUAY</div><p>Subí tu música • Mezclá • Automix • Grabá • Grita</p></div>
+
+<!-- NUEVO - CLASES PARA SONAR DIFERENTE -->
+<div class="clases">
+<h2 style="color:#a100ff;margin:0">🎼 CLASES - TOCÁ UNA Y SUENA DIFERENTE</h2>
+<p id="claseActual">CLASE ACTUAL: 🎵 CUMBIA</p>
+<button class="yellow" onclick="setClase('cumbia')">🎵 CUMBIA</button>
+<button class="pink" onclick="setClase('reggaeton')">🔥 REGGAETON</button>
+<button class="green" onclick="setClase('guarania')">💛 GUARANIA</button>
+<button class="orange" onclick="setClase('villera')">⚡ VILLERA</button>
+<button class="red" onclick="setClase('rock')">🎸 ROCK</button>
+<button class="cyan" onclick="setClase('electronica')">🤖 ELECTRÓNICA</button>
+<button class="blue" onclick="setClase('polka')">🇵🇾 POLKA</button>
+<br>
+<button class="purple" onclick="ritmoAuto()">🥁 RITMO SOLO - SIN MÚSICA</button>
+<button class="gray" onclick="pararRitmo()">⏹️ PARAR RITMO</button>
+<p id="ritmoTxt" style="color:#00ff00;font-weight:bold"></p>
+<p style="font-size:12px;color:#ccc">Cada clase cambia sola: Graves, Medios, Agudos, Tempo y Echo</p>
+</div>
 
 <div class="wrap">
 <div class="deck a"><h2>🎵 DECK A</h2><input type="file" id="fA" accept="audio/*"><audio id="auA" controls></audio>
@@ -127,13 +148,68 @@ function siren(){
   let f=400, dir=1; let t=setInterval(()=>{ f+=dir*50; if(f>900) dir=-1; if(f<400) dir=1; o.frequency.value=f; },30);
   setTimeout(()=>{clearInterval(t); o.stop();},1800);
 }
+
+// --- NUEVO: CLASES PARA SONAR DIFERENTE FORMA ---
+let claseActual='cumbia';
+function aplicar(bass,mid,tre,tempo,echo,nombre){
+  ['A','B'].forEach(l=>{
+    document.getElementById('bass'+l).value=bass;
+    document.getElementById('mid'+l).value=mid;
+    document.getElementById('tre'+l).value=tre;
+    document.getElementById('sp'+l).value=tempo;
+    document.getElementById('sp'+l+'Txt').innerText=parseFloat(tempo).toFixed(2)+'x';
+  });
+  A.bass.gain.value=bass; B.bass.gain.value=bass;
+  A.mid.gain.value=mid; B.mid.gain.value=mid;
+  A.tre.gain.value=tre; B.tre.gain.value=tre;
+  A.echoGain.gain.value=echo; B.echoGain.gain.value=echo;
+  document.getElementById('echo').value=echo;
+  auA.playbackRate=tempo; auB.playbackRate=tempo;
+  document.getElementById('claseActual').innerText='CLASE ACTUAL: '+nombre;
+  document.getElementById('mixStatus').innerText='MIX MANUAL - '+nombre;
+}
+function setClase(c){
+  claseActual=c;
+  if(c=='cumbia') aplicar(10,2,3,0.95,0.1,'🎵 CUMBIA');
+  if(c=='reggaeton') aplicar(12,0,5,1.05,0.05,'🔥 REGGAETON');
+  if(c=='guarania') aplicar(2,6,6,0.85,0.45,'💛 GUARANIA');
+  if(c=='villera') aplicar(15,3,2,1.0,0.0,'⚡ CUMBIA VILLERA');
+  if(c=='rock') aplicar(4,8,10,1.0,0.15,'🎸 ROCK');
+  if(c=='electronica') aplicar(8,0,12,1.2,0.3,'🤖 ELECTRÓNICA');
+  if(c=='polka') aplicar(6,8,8,1.1,0.2,'🇵🇾 POLKA PARAGUAYA');
+  hablar('¡Ahora suena '+ (c=='cumbia'?'cumbia':c=='reggaeton'?'reggaeton':c=='guarania'?'guarania':c=='villera'?'cumbia villera':c=='rock'?'rock':c=='electronica'?'electronica':'polka paraguaya') +'! ¡DJ Rey Ayala PY!');
+  if(ritmoOn){ pararRitmo(); ritmoAuto(); }
+}
+// --- RITMO SOLO - SUENA SIN SUBIR MUSICA ---
+let ritmoOn=false, ritmoTimer=null;
+function bombo(){
+  let o=ctx.createOscillator(); let g=ctx.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(120, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(40, ctx.currentTime+0.15);
+  g.gain.setValueAtTime(0.6, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime+0.2);
+  o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.25);
+}
+function platillo(){
+  let o=ctx.createOscillator(); let g=ctx.createGain();
+  o.type='sine'; o.frequency.value=6000;
+  g.gain.setValueAtTime(0.15, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime+0.08);
+  o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+0.1);
+}
+function ritmoAuto(){
+  ctx.resume(); ritmoOn=true; let paso=0;
+  let bpm = claseActual=='reggaeton'?95 : claseActual=='guarania'?70 : claseActual=='electronica'?128 : claseActual=='rock'?120 : claseActual=='polka'?115 : 100;
+  let intervalo = 60000 / bpm / 2;
+  document.getElementById('ritmoTxt').innerText='🥁 RITMO PRENDIDO - '+claseActual.toUpperCase()+' - '+bpm+' BPM - ¡GRABÁ ENCIMA!';
+  ritmoTimer=setInterval(()=>{ paso++; if(paso%2==0) bombo(); if(claseActual=='reggaeton' && paso%4==2) bombo(); if(paso%2==1) platillo(); }, intervalo);
+}
+function pararRitmo(){ ritmoOn=false; clearInterval(ritmoTimer); document.getElementById('ritmoTxt').innerText='⏹️ RITMO APAGADO'; }
+
 let autoTimer=null;
 function doCrossfade(durationSec){
   let cross=document.getElementById('cross'); let start=parseFloat(cross.value); let target = start<50?100:0; let steps=durationSec*20; let step=(target-start)/steps; let i=0;
   clearInterval(autoTimer); autoTimer=setInterval(()=>{ i++; cross.value=parseFloat(cross.value)+step; cross.dispatchEvent(new Event('input')); if(i>=steps){clearInterval(autoTimer);} },50);
 }
 function startAutoMix(){ playBoth(); document.getElementById('mixStatus').innerText='🔥 AUTOMIX ENCENDIDO'; setTimeout(()=>doCrossfade(6),2000); autoTimer=setInterval(()=>{ doCrossfade(6); },12000); }
-function stopAutoMix(){ clearInterval(autoTimer); document.getElementById('mixStatus').innerText='MIX MANUAL'; }
+function stopAutoMix(){ clearInterval(autoTimer); document.getElementById('mixStatus').innerText='MIX MANUAL - '+claseActual.toUpperCase(); }
 function mixRapido(){ playBoth(); doCrossfade(3); }
 function mixSuave(){ playBoth(); doCrossfade(8); }
 
@@ -175,7 +251,6 @@ function stopRec(){
       let encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
       let mp3Data = [];
       let blockSize = 1152;
-      // juntar todo
       let totalLen = 0; mp3Chunks.forEach(c=> totalLen += c.length);
       let all = new Int16Array(totalLen); let off=0;
       mp3Chunks.forEach(c=>{ all.set(c, off); off+=c.length; });
@@ -188,7 +263,7 @@ function stopRec(){
       if(end.length>0) mp3Data.push(new Int8Array(end));
       lastMp3Blob = new Blob(mp3Data, {type:'audio/mp3'});
       document.getElementById('mp3Status').innerText='✅ GRABADO '+Math.round(lastMp3Blob.size/1024)+' KB - BAJANDO EN MP3...';
-      bajarBlob(lastMp3Blob, 'DJ-REY-AYALA-CAACUPE-MIX.mp3');
+      bajarBlob(lastMp3Blob, 'DJ-REY-AYALA-'+claseActual+'-MIX.mp3');
       document.getElementById('convStatus').innerText='✅ ¡BAJÓ EN MP3! Buscalo en Descargas - Ese sí agarra TikTok';
       document.getElementById('recStatus').innerText='⏹️ PARADO Y BAJADO EN MP3';
     }catch(e){
@@ -199,7 +274,7 @@ function stopRec(){
 }
 function descargarDeNuevo(){
   if(!lastMp3Blob){ alert('Primero GRABÁ y PARÁ'); return; }
-  bajarBlob(lastMp3Blob, 'DJ-REY-AYALA-CAACUPE-MIX.mp3');
+  bajarBlob(lastMp3Blob, 'DJ-REY-AYALA-'+claseActual+'-MIX.mp3');
   document.getElementById('convStatus').innerText='✅ ¡BAJÓ DE NUEVO EN MP3!';
 }
 </script>
